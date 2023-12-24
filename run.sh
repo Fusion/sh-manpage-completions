@@ -20,7 +20,7 @@ export PYTHON_CMD
 # CFR
 SEDCMD=sed
 HEADCMD=head
-[[ $OSTYPE == 'darwin'* ]] && {
+[[ "$OSTYPE" == 'darwin'* ]] && {
     command -v gsed &>/dev/null || {
         echo "Please install coreutils: brew install coreutils"
         exit 1
