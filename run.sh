@@ -17,6 +17,19 @@ if ! command -v "$PYTHON_CMD" > /dev/null 2>&1; then
 fi
 export PYTHON_CMD
 
+# CFR
+SEDCMD=sed
+HEADCMD=head
+[[ $OSTYPE == 'darwin'* ]] && {
+    command -v gsed &>/dev/null || {
+        echo "Please install coreutils: brew install coreutils"
+        exit 1
+    }
+    SEDCMD=gsed
+    HEADCMD=ghead
+}
+#
+
 ./dependencies.sh || exit 1
 
 usage() {
@@ -28,7 +41,7 @@ usage() {
 file=$1
 [ -f "$1" ] || usage
 
-name=$(echo "$file" | sed 's/.*\/\([^.]*\).*/\1/g')
+name=$(echo "$file" | $SEDCMD 's/.*\/\([^.]*\).*/\1/g')
 [ -n "$name" ] || usage
 
 # change working directory to the repository's root where this file should be
@@ -69,7 +82,7 @@ process_completions() {
     completions=$completions$begin_line$line$end_line
   done < "$scanner_out_file"
   if { echo "$shell" | grep "zsh" > /dev/null; } && [ "${#completions}" -ge 4 ]; then
-    completions=$(printf '%s\n' "$completions" | head -c -4)
+    completions=$(printf '%s\n' "$completions" | $HEADCMD -c -4)
   fi
 
   template_file=templates/"$shell"
@@ -82,7 +95,7 @@ process_completions() {
   fi
 
   cp "$template_file" "$shell_file"
-  sed -i "s/COMMAND/$name/g" "$shell_file"
+  $SEDCMD -i "s/COMMAND/$name/g" "$shell_file"
   tmp_file=$(mktemp)
   awk -v r="$completions" \
     "{gsub(/ARGUMENTS/,r)}1" \
@@ -104,9 +117,9 @@ process_completions() {
     fi
     if [ "$BASH_USE_SELECTOR" -eq 1 ]; then
       if [ -n "$SELECTOR_QUERY" ]; then
-        sed -i "s/SELECTOR/$SELECTOR $SELECTOR_QUERY \"\$cur\"/g" "$shell_file"
+        $SEDCMD -i "s/SELECTOR/$SELECTOR $SELECTOR_QUERY \"\$cur\"/g" "$shell_file"
       else
-        sed -i "s/SELECTOR/$SELECTOR/g" "$shell_file"
+        $SEDCMD -i "s/SELECTOR/$SELECTOR/g" "$shell_file"
       fi
     fi
   fi
